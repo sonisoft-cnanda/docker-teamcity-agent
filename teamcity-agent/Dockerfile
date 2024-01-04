@@ -14,8 +14,10 @@ FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_SDK_VERSION7_TAG} AS dotnetsdk7
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_SDK_VERSION6_TAG} AS dotnetsdk6
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_SDK_VERSION5_TAG} AS dotnetsdk5
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_SDK_VERSION31_TAG} AS dotnetsdk3
+FROM node:21.5 AS node
 FROM $MINVER_IMAGE AS minver
 FROM $DOCKER_CLI_IMAGE AS dockercli
+
 
 FROM scratch AS build
 # make sure folder exist
@@ -107,6 +109,17 @@ RUN apt-get update \
   && dotnet nuget locals all --clear \
   && apt-get clean \
   && rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+
+
+RUN apt-get update && apt-get install -y ca-certificates curl gnupg
+RUN mkdir /etc/apt/keyrings
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key |  gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+RUN apt-get update && apt-get install nodejs -y
+
+# Replace shell with bash so we can source files
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
 
 USER buildagent
 
